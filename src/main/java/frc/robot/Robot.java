@@ -4,6 +4,17 @@
 
 package frc.robot;
 
+import javax.swing.text.Position;
+
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkPIDController;
+import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 /**
@@ -17,11 +28,30 @@ public class Robot extends TimedRobot {
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
-  @Override
-  public void robotInit() {}
+
+   CANSparkMax motor = new CANSparkMax(0,MotorType.kBrushless);
+   RelativeEncoder encoder = motor.getEncoder();
+
+   PIDController pid = new PIDController(2, 0, 0.5);
+   ArmFeedforward feedforward = new ArmFeedforward(5.0, 10.0, 0);
 
   @Override
-  public void robotPeriodic() {}
+  public void robotInit() {
+    motor.setIdleMode(IdleMode.kBrake);
+    motor.setInverted(false);
+    motor.setSmartCurrentLimit(40);
+
+    pid.setTolerance(5);
+  }
+
+  @Override
+  public void robotPeriodic() {
+    pid.setSetpoint(45);
+    double pidOutput = pid.calculate(encoder.getPosition());
+    double ffOutput = feedforward.calculate(encoder.getPosition(), 0);
+
+    motor.set(pidOutput + ffOutput);
+  }
 
   @Override
   public void autonomousInit() {}
@@ -30,10 +60,14 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {}
 
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+
+  }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+
+  }
 
   @Override
   public void disabledInit() {}
