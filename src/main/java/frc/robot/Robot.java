@@ -16,6 +16,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The robot is configured to automatically run this class, and to call the functions corresponding to
@@ -35,6 +36,8 @@ public class Robot extends TimedRobot {
    PIDController pid = new PIDController(2, 0, 0.5);
    ArmFeedforward feedforward = new ArmFeedforward(5.0, 10.0, 0);
 
+
+
   @Override
   public void robotInit() {
     motor.setIdleMode(IdleMode.kBrake);
@@ -42,15 +45,39 @@ public class Robot extends TimedRobot {
     motor.setSmartCurrentLimit(40);
 
     pid.setTolerance(5);
+
+    SmartDashboard.putNumber("kp", SmartDashboard.getNumber("kp", 0));
+    SmartDashboard.putNumber("ki", SmartDashboard.getNumber("ki", 0));
+    SmartDashboard.putNumber("kd", SmartDashboard.getNumber("kd", 0));
+
+    SmartDashboard.putNumber("ks", SmartDashboard.getNumber("ks", 0));
+    SmartDashboard.putNumber("kg", SmartDashboard.getNumber("kg", 0));
+    SmartDashboard.putNumber("setpoint", SmartDashboard.getNumber("setpoint", 0));
   }
 
   @Override
   public void robotPeriodic() {
-    pid.setSetpoint(45);
+
+    double p = SmartDashboard.getNumber("kp", 0);
+    double i = SmartDashboard.getNumber("ki", 0);
+    double d = SmartDashboard.getNumber("kd", 0);
+
+    double s = SmartDashboard.getNumber("ks", 0);
+    double g = SmartDashboard.getNumber("kg", 0);
+
+    double setpoint = SmartDashboard.getNumber("setpoint",0);
+
+    pid.setPID(p, i, d);
+    feedforward = new ArmFeedforward(s, g, 0);
+    pid.setSetpoint(setpoint);
+
     double pidOutput = pid.calculate(encoder.getPosition());
     double ffOutput = feedforward.calculate(encoder.getPosition(), 0);
 
     motor.set(pidOutput + ffOutput);
+
+    SmartDashboard.getNumber("motor position ", encoder.getPosition());
+    SmartDashboard.getBoolean("at setpoint? ", pid.atSetpoint());
   }
 
   @Override
